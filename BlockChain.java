@@ -36,47 +36,60 @@ public class BlockChain {
       }
    }
 
-   /* create an empty block chain with just a genesis block.
+   /*
+    * create an empty block chain with just a genesis block.
     * Assume genesis block is a valid block
     */
    public BlockChain(Block genesisBlock) {
       // IMPLEMENT THIS
    }
 
-   /* Get the maximum height block
+   /*
+    * Get the maximum height block
     */
    public Block getMaxHeightBlock() {
-      // IMPLEMENT THIS
+      // IMPLEMENT THIS (DONE)
+      return maxHeightNode.b;
+
    }
-   
-   /* Get the UTXOPool for mining a new block on top of 
+
+   /*
+    * Get the UTXOPool for mining a new block on top of
     * max height block
     */
    public UTXOPool getMaxHeightUTXOPool() {
-      // IMPLEMENT THIS
-   }
-   
-   /* Get the transaction pool to mine a new block
-    */
-   public TransactionPool getTransactionPool() {
-      // IMPLEMENT THIS
+      // IMPLEMENT THIS (DONE)
+      return maxHeightNode.getUTXOPoolCopy();
    }
 
-   /* Add a block to block chain if it is valid.
+   /*
+    * Get the transaction pool to mine a new block
+    */
+   public TransactionPool getTransactionPool() {
+      // IMPLEMENT THIS (DONE)
+      return txPool;
+   }
+
+   /*
+    * Add a block to block chain if it is valid.
     * For validity, all transactions should be valid
     * and block should be at height > (maxHeight - CUT_OFF_AGE).
-    * For example, you can try creating a new block over genesis block 
-    * (block height 2) if blockChain height is <= CUT_OFF_AGE + 1. 
-    * As soon as height > CUT_OFF_AGE + 1, you cannot create a new block at height 2.
+    * For example, you can try creating a new block over genesis block
+    * (block height 2) if blockChain height is <= CUT_OFF_AGE + 1.
+    * As soon as height > CUT_OFF_AGE + 1, you cannot create a new block at height
+    * 2.
     * Return true of block is successfully added
     */
    public boolean addBlock(Block b) {
-       // IMPLEMENT THIS
+      // IMPLEMENT THIS
    }
 
-   /* Add a transaction in transaction pool
+   /*
+    * Add a transaction in transaction pool
     */
    public void addTransaction(Transaction tx) {
-      // IMPLEMENT THIS
+      // IMPLEMENT THIS (DONE)
+      txPool.addTransaction(tx);
+
    }
 }
