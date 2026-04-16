@@ -9,6 +9,11 @@ import java.util.HashMap;
 public class BlockChain {
    public static final int CUT_OFF_AGE = 10;
 
+   // added these fields to reference the block chain and transaction pool
+   private HashMap<ByteArrayWrapper, BlockNode> blockChain;
+   private TransactionPool txPool;
+   private BlockNode maxHeightNode;
+
    // all information required in handling a block in block chain
    private class BlockNode {
       public Block b;
@@ -41,7 +46,22 @@ public class BlockChain {
     * Assume genesis block is a valid block
     */
    public BlockChain(Block genesisBlock) {
+
       // IMPLEMENT THIS
+      blockChain = new HashMap<>();
+      txPool = new TransactionPool();
+
+      UTXOPool genesisPool = new UTXOPool();
+
+      Transaction coinbase = genesisBlock.getCoinbase();
+      for (int i = 0; i < coinbase.numOutputs(); i++) {
+         UTXO utxo = new UTXO(coinbase.getHash(), i);
+         genesisPool.addUTXO(utxo, coinbase.getOutput(i));
+      }
+
+      BlockNode genesisNode = new BlockNode(genesisBlock, null, genesisPool);
+      blockChain.put(new ByteArrayWrapper(genesisBlock.getHash()), genesisNode);
+      maxHeightNode = genesisNode;
    }
 
    /*
@@ -82,6 +102,57 @@ public class BlockChain {
     */
    public boolean addBlock(Block b) {
       // IMPLEMENT THIS
+      if (b == null)
+         return false;
+
+      byte[] prevHash = b.getPrevBlockHash();
+      if (prevHash == null)
+         return false;
+
+      BlockNode parentNode = blockChain.get(new ByteArrayWrapper(prevHash));
+      if (parentNode == null)
+         return false;
+
+      int newHeight = parentNode.height + 1;
+
+      if (newHeight <= maxHeightNode.height - CUT_OFF_AGE) {
+         return false;
+      }
+
+      UTXOPool parentPoolCopy = parentNode.getUTXOPoolCopy();
+      TxHandler handler = new TxHandler(parentPoolCopy);
+
+      Transaction[] txs = new Transaction[b.getTransactions().size()];
+      for (int i = 0; i < b.getTransactions().size(); i++) {
+         txs[i] = b.getTransactions().get(i);
+      }
+
+      Transaction[] validTxs = handler.handleTxs(txs);
+
+      if (validTxs.length != txs.length) {
+         return false;
+      }
+
+      UTXOPool newPool = handler.getUTXOPool();
+
+      Transaction coinbase = b.getCoinbase();
+      for (int i = 0; i < coinbase.numOutputs(); i++) {
+         UTXO utxo = new UTXO(coinbase.getHash(), i);
+         newPool.addUTXO(utxo, coinbase.getOutput(i));
+      }
+
+      BlockNode newNode = new BlockNode(b, parentNode, newPool);
+      blockChain.put(new ByteArrayWrapper(b.getHash()), newNode);
+
+      if (newNode.height > maxHeightNode.height) {
+         maxHeightNode = newNode;
+      }
+
+      for (Transaction tx : txs) {
+         txPool.removeTransaction(tx.getHash());
+      }
+
+      return true;
    }
 
    /*
@@ -90,6 +161,6 @@ public class BlockChain {
    public void addTransaction(Transaction tx) {
       // IMPLEMENT THIS (DONE)
       txPool.addTransaction(tx);
-
    }
+
 }
